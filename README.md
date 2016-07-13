@@ -1,1 +1,2 @@
-# fontic
+# Fontic
+A little font toy
