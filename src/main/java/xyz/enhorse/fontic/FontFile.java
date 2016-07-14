@@ -33,14 +33,8 @@ class FontFile {
 
 
     private String normalizedFontName() {
-        String cyrillic = "";
-
-        if (hasCyrillic()) {
-            cyrillic = CYRILLIC_FONT_MARK;
-        }
-
         return family()
-                + cyrillic
+                + (hasCyrillic() ? CYRILLIC_FONT_MARK : "")
                 + FAMILY_STYLE_SEPARATOR
                 + removeSymbols(style());
     }
@@ -79,7 +73,7 @@ class FontFile {
 
 
     private String getPath() {
-        File parent = file.getParentFile();
+        final File parent = file.getParentFile();
 
         return parent != null
                 ? parent.getAbsolutePath() + File.separator
@@ -93,10 +87,10 @@ class FontFile {
 
 
     private static File loadFile(final String filename) {
-        File file = new File(filename);
+        final File file = new File(filename);
 
         if (!file.exists()) {
-            throw new IllegalArgumentException("The file \'" + filename + "\' doesn't exit!");
+            throw new IllegalArgumentException("The file \'" + filename + "\' doesn't exist!");
         }
         if (!file.canRead()) {
             throw new IllegalArgumentException("Cannot get read-access to the file \'" + filename + '\'');
@@ -137,7 +131,6 @@ class FontFile {
 
 
     public static boolean renameToNormalized(String filename) {
-        FontFile fontFile = new FontFile(filename);
-        return fontFile.renameToNormalized();
+        return new FontFile(filename).renameToNormalized();
     }
 }

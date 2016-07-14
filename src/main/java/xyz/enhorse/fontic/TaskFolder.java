@@ -5,10 +5,11 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:pavel13kalinin@gmail.com">Pavel Kalinin</a>
@@ -16,17 +17,15 @@ import java.util.List;
  */
 public class TaskFolder {
 
-    private final Path path;
+    private final File folder;
 
 
-    public TaskFolder(String path) {
-        this.path = isValidPath(path)
-                ? Paths.get(path)
-                : currentDirectory();
+    public TaskFolder(String directory) {
+        folder = validateDirectory(directory);
     }
 
 
-    public List<File> getContents(String... extensions) {
+    public List<File> getContents(final String... extensions) {
         if (extensions == null) {
             return Collections.emptyList();
         }
@@ -40,55 +39,75 @@ public class TaskFolder {
     }
 
 
-    private boolean isValidPath(String path) {
-        return (path != null) && (new File(path).isDirectory());
+    private File validateDirectory(String path) {
+        File result = null;
+
+        if (path != null) {
+            File temp = new File(path);
+            if (temp.isDirectory()) {
+                result = temp;
+            }
+        }
+
+        return result != null
+                ? result
+                : currentDirectory();
     }
 
 
-    private File path() {
-        return path.toFile();
+    private File folder() {
+        return folder;
     }
 
 
-    private Path currentDirectory() {
-        return Paths.get("");
+    private File currentDirectory() {
+        return new File("");
     }
 
 
     private List<File> fileList(FileFilter filter) {
-        List<File> fileNames = new ArrayList<>();
-        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path().toPath(), filter)) {
+        List<File> result = new ArrayList<>();
+        Path current = folder().toPath();
+
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(current, filter)) {
             for (Path path : directoryStream) {
                 if (!Files.isDirectory(path))
-                    fileNames.add(path.toFile());
+                    result.add(path.toFile());
             }
         } catch (IOException ex) {
-            try {
-                if (path().isFile() && filter.accept(path().toPath())) {
-                    fileNames.add(path());
-                }
-            } catch (IOException e) {
-                System.err.println("Listing error with the path \'" + path() + '\'');
-                e.printStackTrace();
-            }
+            throw new IllegalStateException("Listing error with the folder \'" + folder() + '\'', ex);
         }
-        return fileNames;
+
+        return result;
     }
 
 
     private class FileFilter implements DirectoryStream.Filter<Path> {
 
-        private String extension;
+        private final Set<String> suitable = new HashSet<>();
 
 
-        FileFilter(String extension) {
-            this.extension = extension.toLowerCase();
+        FileFilter(final String... extensions) {
+            fillSuitable(extensions);
+        }
+
+
+        private void fillSuitable(final String... extensions) {
+            for (String extension : extensions) {
+                extension = extension.trim();
+                if (!extension.isEmpty()) {
+                    if (extension.charAt(0) != '.') {
+                        extension = '.' + extension;
+                    }
+                    suitable.add(extension);
+                }
+            }
         }
 
 
         @Override
         public boolean accept(Path entry) throws IOException {
-            return entry.toString().toLowerCase().endsWith('.' + extension);
+            return suitable.contains(entry.toString().toLowerCase());
         }
     }
 }

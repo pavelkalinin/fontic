@@ -18,7 +18,7 @@ public class Main {
                     counter++;
                 }
             }
-            System.out.println(counter + " files was renamed");
+            System.out.println(counter + " files was renamed.");
         } else {
             String filename = args[0];
             FontFile fontFile = new FontFile(filename);
