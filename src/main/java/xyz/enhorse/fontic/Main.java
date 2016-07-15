@@ -1,5 +1,7 @@
 package xyz.enhorse.fontic;
 
+import xyz.enhorse.commons.Folder;
+
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +15,7 @@ public class Main {
     public static void main(String[] args) throws IOException, FontFormatException {
         if (args.length == 0) {
             int counter = 0;
-            for (File file : new TaskFolder("").getContents("otf", "ttf")) {
+            for (File file : new Folder("").getContents("otf", "ttf")) {
                 if (FontFile.renameToNormalized(file.toString())) {
                     counter++;
                 }
