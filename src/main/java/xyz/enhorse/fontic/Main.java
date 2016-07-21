@@ -3,8 +3,8 @@ package xyz.enhorse.fontic;
 import xyz.enhorse.commons.Folder;
 
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * @author <a href="mailto:pavel13kalinin@gmail.com">Pavel Kalinin</a>
@@ -15,8 +15,8 @@ public class Main {
     public static void main(String[] args) throws IOException, FontFormatException {
         if (args.length == 0) {
             int counter = 0;
-            for (File file : new Folder("").getContents("otf", "ttf")) {
-                if (FontFile.renameToNormalized(file.toString())) {
+            for (Path path : new Folder("").listFiles("otf", "ttf")) {
+                if (FontFile.renameToNormalized(path.toString())) {
                     counter++;
                 }
             }
