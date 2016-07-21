@@ -1,9 +1,13 @@
 package xyz.enhorse.fontic;
 
+import xyz.enhorse.commons.HandyPath;
+
 import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author <a href="mailto:pavel13kalinin@gmail.com">Pavel Kalinin</a>
@@ -16,18 +20,28 @@ class FontFile {
     private static final String CYRILLIC_FONT_MARK = "(Cyrillic)";
     private static final char CYRILLIC_SPECIAL = 'Ё';
 
-    private final File file;
+    private final HandyPath file;
     private final Font font;
 
 
-    FontFile(final String filename) {
-        file = loadFile(filename);
-        font = loadFont(file);
+    FontFile(final Path path) {
+        file = loadFile(path);
+        font = loadFont(file.toFile());
+    }
+
+
+    FontFile(final String path) {
+        file = loadFile(Paths.get(path));
+        font = loadFont(file.toFile());
     }
 
 
     public File normalizedFilename() {
-        String filename = getPath() + normalizedFontName() + getExtension();
+        String filename = file.pathname()
+                + HandyPath.PATH_SEPARATOR
+                + normalizedFontName()
+                + HandyPath.EXTENSION_SEPARATOR
+                + file.extension();
         return new File(filename);
     }
 
@@ -62,41 +76,31 @@ class FontFile {
     }
 
 
-    private String getExtension() {
-        final char separator = '.';
-        String extension = file.getName();
-
-        return extension.contains(separator + "")
-                ? extension.substring(extension.lastIndexOf(separator))
-                : "";
-    }
-
-
-    private String getPath() {
-        final File parent = file.getParentFile();
-
-        return parent != null
-                ? parent.getAbsolutePath() + File.separator
-                : "";
-    }
-
-
     public String originalFilename() {
-        return file.getName();
+        return file.filename();
     }
 
 
-    private static File loadFile(final String filename) {
-        final File file = new File(filename);
-
-        if (!file.exists()) {
-            throw new IllegalArgumentException("The file \'" + filename + "\' doesn't exist!");
-        }
-        if (!file.canRead()) {
-            throw new IllegalArgumentException("Cannot get read-access to the file \'" + filename + '\'');
+    public boolean renameToNormalized() {
+        if (file.isWritable()) {
+            return file.toFile().renameTo(normalizedFilename());
         }
 
-        return file;
+        throw new IllegalStateException("Cannot get write-access to the file \'" + file.filename() + '\'');
+    }
+
+
+    private static HandyPath loadFile(final Path file) {
+        final HandyPath path = new HandyPath(file);
+
+        if (!path.isExisting()) {
+            throw new IllegalArgumentException("The file \'" + file + "\' doesn't exist!");
+        }
+        if (!path.isReadable()) {
+            throw new IllegalArgumentException("Cannot get read-access to the file \'" + file + '\'');
+        }
+
+        return path;
     }
 
 
@@ -118,19 +122,5 @@ class FontFile {
         }
 
         return result;
-    }
-
-
-    public boolean renameToNormalized() {
-        if (file.canWrite()) {
-            return file.renameTo(normalizedFilename());
-        }
-
-        throw new IllegalStateException("Cannot get write-access to the file \'" + file.getName() + '\'');
-    }
-
-
-    public static boolean renameToNormalized(String filename) {
-        return new FontFile(filename).renameToNormalized();
     }
 }

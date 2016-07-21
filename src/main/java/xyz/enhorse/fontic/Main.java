@@ -15,8 +15,9 @@ public class Main {
     public static void main(String[] args) throws IOException, FontFormatException {
         if (args.length == 0) {
             int counter = 0;
-            for (Path path : new Folder("").listFiles("otf", "ttf")) {
-                if (FontFile.renameToNormalized(path.toString())) {
+
+            for (Path path : new Folder().listFiles("otf", "ttf", "TTF")) {
+                if (new FontFile(path).renameToNormalized()) {
                     counter++;
                 }
             }
