@@ -1,6 +1,7 @@
 package xyz.enhorse.fontic;
 
 import xyz.enhorse.commons.HandyPath;
+import xyz.enhorse.commons.Validate;
 
 import java.awt.*;
 import java.io.File;
@@ -20,46 +21,36 @@ class FontFile {
     private static final String CYRILLIC_FONT_MARK = "(Cyrillic)";
     private static final char CYRILLIC_SPECIAL = 'Ё';
 
-    private final HandyPath file;
     private final Font font;
+    private HandyPath file;
 
 
     FontFile(final Path path) {
-        file = loadFile(path);
-        font = loadFont(file.toFile());
+        font = loadFont(loadFile(Validate.notNull("input file", path)));
     }
 
 
-    FontFile(final String path) {
-        file = loadFile(Paths.get(path));
-        font = loadFont(file.toFile());
+    FontFile(final String file) {
+        this(Paths.get(Validate.notNullOrEmpty("input file", file)));
     }
 
 
-    public File normalizedFilename() {
-        String filename = file.pathname()
-                + HandyPath.PATH_SEPARATOR
-                + normalizedFontName()
-                + HandyPath.EXTENSION_SEPARATOR
-                + file.extension();
-        return new File(filename);
+    FontFile(final File file) {
+        this(Validate.notNull("input file", file).toPath());
     }
 
 
-    private String normalizedFontName() {
-        return family()
-                + (hasCyrillic() ? CYRILLIC_FONT_MARK : "")
-                + FAMILY_STYLE_SEPARATOR
-                + removeSymbols(style());
+    Path source() {
+        return file;
     }
 
 
-    public String family() {
+    String family() {
         return font.getFamily().trim();
     }
 
 
-    public String style() {
+    String style() {
         String name = font.getFontName().trim();
         String family = family();
 
@@ -71,36 +62,47 @@ class FontFile {
     }
 
 
-    public boolean hasCyrillic() {
+    boolean hasCyrillic() {
         return font.canDisplay(CYRILLIC_SPECIAL);
     }
 
 
-    public String originalFilename() {
-        return file.filename();
+    String normalized() {
+        return file.pathname()
+                + family()
+                + (hasCyrillic() ? CYRILLIC_FONT_MARK : "")
+                + FAMILY_STYLE_SEPARATOR
+                + removeSymbols(style())
+                + file.extension();
     }
 
 
-    public boolean renameToNormalized() {
-        if (file.isWritable()) {
-            return file.toFile().renameTo(normalizedFilename());
+    boolean renameToNormalized() {
+        if (!file.isWritable()) {
+            return false;
         }
 
-        throw new IllegalStateException("Cannot get write-access to the file \'" + file.filename() + '\'');
+        File newFile = new File(normalized());
+        boolean result = file.toFile().renameTo(newFile);
+        if (result) {
+            loadFile(newFile.toPath());
+        }
+
+        return result;
     }
 
 
-    private static HandyPath loadFile(final Path file) {
-        final HandyPath path = new HandyPath(file);
+    private File loadFile(final Path path) {
+        file = new HandyPath(path);
 
-        if (!path.isExisting()) {
+        if (!file.isExisting()) {
             throw new IllegalArgumentException("The file \'" + file + "\' doesn't exist!");
         }
-        if (!path.isReadable()) {
+        if (!file.isReadable()) {
             throw new IllegalArgumentException("Cannot get read-access to the file \'" + file + '\'');
         }
 
-        return path;
+        return file.toFile();
     }
 
 
@@ -114,13 +116,6 @@ class FontFile {
 
 
     private static String removeSymbols(final String string) {
-        final char[] symbols = {',', '.', ';', '_', '-', '\'', '\"'};
-
-        String result = string;
-        for (char symbol : symbols) {
-            result = result.replace(symbol, '\0');
-        }
-
-        return result;
+        return string.replaceAll("[,.;_-]|\'|\"", "");
     }
 }

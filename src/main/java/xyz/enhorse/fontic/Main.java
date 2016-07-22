@@ -16,7 +16,7 @@ public class Main {
         if (args.length == 0) {
             int counter = 0;
 
-            for (Path path : new Folder().listFiles("otf", "ttf", "TTF")) {
+            for (Path path : new Folder().listFiles("otf", "ttf")) {
                 if (new FontFile(path).renameToNormalized()) {
                     counter++;
                 }
@@ -26,7 +26,7 @@ public class Main {
             String filename = args[0];
             FontFile fontFile = new FontFile(filename);
             if (fontFile.renameToNormalized()) {
-                System.out.println(filename + " was renamed to " + fontFile.originalFilename());
+                System.out.println(filename + " was renamed to " + fontFile.normalized());
             }
         }
 
