@@ -1,6 +1,6 @@
 package xyz.enhorse.fontic;
 
-import xyz.enhorse.commons.HandyPath;
+import xyz.enhorse.commons.PathEx;
 import xyz.enhorse.commons.Validate;
 
 import java.awt.*;
@@ -22,7 +22,7 @@ class FontFile {
     private static final char CYRILLIC_SPECIAL = 'Ё';
 
     private final Font font;
-    private HandyPath file;
+    private PathEx file;
 
 
     FontFile(final Path path) {
@@ -93,7 +93,7 @@ class FontFile {
 
 
     private File loadFile(final Path path) {
-        file = new HandyPath(path);
+        file = new PathEx(path);
 
         if (!file.isExisting()) {
             throw new IllegalArgumentException("The file \'" + file + "\' doesn't exist!");
